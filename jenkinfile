@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "sunshine-nginx"
+        IMAGE_TAG = "1.0"
+        CONTAINER_NAME = "sunshine-nginx-container"
+        HOST_PORT = "8081"
+    }
+
+    stages {
+
+        stage('Pull Code') {
+            steps {
+                echo "Pulling repo..."
+                git branch: 'main', url: 'https://github.com/subalakshmir087-dataqueen/docker-nginx.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo "Building Docker image..."
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                sh "docker images"
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                echo "Stopping old container (if exists)..."
+                sh "docker rm -f ${CONTAINER_NAME} || true"
+
+                echo "Running new container..."
+                sh "docker run -d -p ${HOST_PORT}:80 --name ${CONTAINER_NAME} ${IMAGE_NAME}:${IMAGE_TAG}"
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo "Pipeline SUCCESS ✅"
+        }
+        failure {
+            echo "Pipeline FAILED ❌"
+        }
+    }
+}
+
